@@ -7,39 +7,49 @@
 //
 
 import SpriteKit
+import CoreMotion
 
-class GameScene: SKScene {
-    override func didMoveToView(view: SKView) {
-        /* Setup your scene here */
-        let myLabel = SKLabelNode(fontNamed:"Chalkduster")
-        myLabel.text = "Hello, World!"
-        myLabel.fontSize = 45
-        myLabel.position = CGPoint(x:CGRectGetMidX(self.frame), y:CGRectGetMidY(self.frame))
+class GameScene: SKScene,SKPhysicsContactDelegate
+{
+    
+    let manager = CMMotionManager()
+    var player = SKSpriteNode()
+    var end = SKSpriteNode()
+    
+    override func didMove(to view: SKView)
+    {
         
-        self.addChild(myLabel)
+        self.physicsWorld.contactDelegate = self
+        player = self.childNode(withName: "player") as! SKSpriteNode
+        end = self.childNode(withName: "endNode") as! SKSpriteNode
+        manager.startAccelerometerUpdates()
+        manager.accelerometerUpdateInterval = 0.1
+        manager.startAccelerometerUpdates(to: OperationQueue.main)
+        {
+            (data,error) in
+            self.physicsWorld.gravity = CGVector(dx: CGFloat((data?.acceleration.x)!) * 10,dy: CGFloat((data?.acceleration.y)!) * 10)
+        }
+        
     }
     
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
-       /* Called when a touch begins */
+    func didBegin(_ contact: SKPhysicsContact)
+    {
+        let bodyA = contact.bodyA
+        let bodyB = contact.bodyB
         
-        for touch in touches {
-            let location = touch.locationInNode(self)
-            
-            let sprite = SKSpriteNode(imageNamed:"Spaceship")
-            
-            sprite.xScale = 0.5
-            sprite.yScale = 0.5
-            sprite.position = location
-            
-            let action = SKAction.rotateByAngle(CGFloat(M_PI), duration:1)
-            
-            sprite.runAction(SKAction.repeatActionForever(action))
-            
-            self.addChild(sprite)
+        if bodyA.categoryBitMask == 1 && bodyB.categoryBitMask == 2 || bodyA.categoryBitMask == 2 && bodyB.categoryBitMask == 1
+        {
+            print("You won")
         }
+        
     }
    
-    override func update(currentTime: CFTimeInterval) {
+    override func update(_ currentTime: TimeInterval)
+    {
         /* Called before each frame is rendered */
     }
+
+
+
+
 }
